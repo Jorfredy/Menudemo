@@ -9,12 +9,23 @@
         body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); padding-bottom: 100px; }
         
         .sticky-container { position: sticky; top: 0; z-index: 100; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        header { text-align: center; padding: 10px 0; position: relative; }
-        .logo-header { max-width: 80%; max-height: 80px; display: block; margin: 0 auto; height: auto; }
-        .btn-gerente { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.8); border: 1px solid var(--primary); color: var(--primary); padding: 4px 8px; border-radius: 5px; font-size: 0.7em; cursor: pointer; font-weight: bold; }
+        header { display: flex; flex-direction: column; align-items: center; padding: 15px 0 10px 0; position: relative; }
         
+        .logo-header { max-width: 80%; max-height: 80px; display: block; height: auto; user-select: none; -webkit-touch-callout: none; cursor: pointer; transition: transform 0.2s;}
+        .logo-header:active { transform: scale(0.95); }
+
+        .btn-menu-hamburguesa { position: absolute; left: 15px; top: 15px; background: none; border: none; font-size: 28px; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 8px; transition: 0.2s;}
+        .btn-menu-hamburguesa:active { background: #eee; }
+
+        .contenedor-redes { display: flex; gap: 15px; margin-top: 10px; }
+        .red-icono { width: 28px; height: 28px; fill: #666; transition: 0.3s; cursor: pointer;}
+        .red-icono:active { fill: var(--primary); transform: scale(0.9); }
+
         .indicador-deslizar { text-align: center; font-size: 0.75em; color: #888; padding: 5px 0; background: #fafafa; border-top: 1px solid #eee; font-weight: bold; letter-spacing: 0.5px; animation: parpadeo 2s infinite;}
         @keyframes parpadeo { 0% { opacity: 0.7; } 50% { opacity: 1; } 100% { opacity: 0.7; } }
+        
+        /* ANIMACIÓN DE BIENVENIDA */
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         .nav-categorias { display: flex; overflow-x: auto; gap: 10px; padding: 10px 15px; background: white; border-bottom: 1px solid #eee; scroll-behavior: smooth; }
         .nav-categorias::-webkit-scrollbar { display: none; }
@@ -28,9 +39,7 @@
         .carrusel-track { display: flex; overflow-x: auto; gap: 15px; padding: 5px 10px 15px 10px; scroll-behavior: smooth; scroll-snap-type: x mandatory; }
         .carrusel-track::-webkit-scrollbar { display: none; }
         
-        .card-carrusel { flex: 0 0 85%; max-width: 320px; background: white; border-radius: 12px; display: flex; flex-direction: column; scroll-snap-align: center; overflow: hidden; position: relative;
-            box-shadow: 0 5px 15px rgba(230, 81, 0, 0.15); border: 1px solid rgba(230, 81, 0, 0.2); 
-        }
+        .card-carrusel { flex: 0 0 85%; max-width: 320px; background: white; border-radius: 12px; display: flex; flex-direction: column; scroll-snap-align: center; overflow: hidden; position: relative; box-shadow: 0 5px 15px rgba(230, 81, 0, 0.15); border: 1px solid rgba(230, 81, 0, 0.2); }
         .card-carrusel.agotado { opacity: 0.6; filter: grayscale(0.8); }
         .img-carrusel { width: 100%; height: 160px; object-fit: contain; background: white; padding: 5px; box-sizing: border-box; cursor: pointer;}
         .info-carrusel { padding: 15px; display: flex; flex-direction: column; flex-grow: 1; border-top: 1px solid #eee;}
@@ -43,9 +52,7 @@
         .titulo-categoria { color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px; margin: 25px 5px 15px 5px; font-size: 1.2em; text-transform: uppercase; scroll-margin-top: 150px; }
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 5px; }
         
-        .platillo-card { background: white; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative;
-            box-shadow: 0 5px 15px rgba(230, 81, 0, 0.15); border: 1px solid rgba(230, 81, 0, 0.2);
-        }
+        .platillo-card { background: white; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; position: relative; box-shadow: 0 5px 15px rgba(230, 81, 0, 0.15); border: 1px solid rgba(230, 81, 0, 0.2); }
         .platillo-card.agotado { opacity: 0.6; filter: grayscale(0.8); }
         .img-contenedor { width: 100%; aspect-ratio: 1 / 1; background: white; cursor: pointer; border-bottom: 1px solid #eee; display: flex; justify-content: center; align-items: center; padding: 8px; box-sizing: border-box;}
         .img-contenedor img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px;}
@@ -72,10 +79,10 @@
         .contenido-detalle { padding: 20px; flex-grow: 1; }
         .footer-detalle { padding: 20px; border-top: 1px solid #eee; background: #f9f9f9; }
         
-        .modal-carrito-content { background: white; width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; display: flex; flex-direction: column; overflow: hidden;}
+        .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative;}
         .carrito-header { padding: 15px 20px; background: var(--bg); border-bottom: 1px solid #eee; text-align: center; }
         .carrito-header h3 { margin: 0; color: var(--primary); }
-        .carrito-lista { padding: 15px 20px; overflow-y: auto; flex-grow: 1; }
+        .carrito-lista { padding: 15px 20px; overflow-y: auto; max-height: 50vh; flex-grow: 1; }
         
         .item-carrito { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px dashed #ddd; padding-bottom: 12px;}
         .item-info { flex-grow: 1; padding-right: 10px;}
@@ -87,21 +94,38 @@
         .item-precio-total { font-weight: bold; color: var(--primary); min-width: 50px; text-align: right; font-size: 0.95em;}
         
         .carrito-footer { padding: 15px 20px; background: #f9f9f9; border-top: 1px solid #eee; }
-        .total-row { display: flex; justify-content: space-between; font-size: 1.2em; font-weight: bold; color: #222; margin-bottom: 10px; }
-        .propina-row { text-align: right; font-size: 0.85em; color: #666; margin-bottom: 15px; line-height: 1.5; }
-        .propina-monto { color: #222; font-weight: bold; }
+        .total-row { display: flex; justify-content: space-between; font-size: 1.2em; font-weight: bold; color: #222; margin-bottom: 15px; }
         
-        .btn-grande { width: 100%; background: var(--primary); color: white; padding: 15px; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1em; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: center; gap: 8px; align-items: center;}
-        .btn-regresar { width: 100%; background: #eee; color: #555; padding: 12px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn-vaciar { width: 100%; background: none; color: var(--danger); padding: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .grid-botones-carrito { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-grande { width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 1em; cursor: pointer; display: flex; justify-content: center; gap: 8px; align-items: center;}
+        .btn-secundario { width: 100%; background: white; color: var(--text); border: 2px solid #ddd; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;}
+        .btn-regresar { width: 100%; background: #eee; color: #555; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-vaciar { width: 100%; background: #fff0f0; color: var(--danger); border: 1px solid #ffcdd2; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        
+        .btn-cerrar-x { position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 28px; color: #888; cursor: pointer; line-height: 1; z-index: 10;}
     </style>
 </head>
 <body>
 
+    <div class="modal-overlay" id="modal-bienvenida" style="z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div class="modal-content" style="max-width: 350px; text-align: center; padding: 30px 20px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+            <h1 style="color: var(--primary); margin-top: 0; font-size: 2em; text-transform: uppercase;">¡Bienvenido!</h1>
+            <img src="temporal.jpg" id="logo-bienvenida" style="width: 120px; height: 120px; object-fit: contain; background: #fff; border-radius: 50%; margin: 0 auto 15px auto; display: block; border: 3px solid var(--primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            <p style="font-size: 1.1em; color: #555; line-height: 1.5; margin-bottom: 25px;">Prepárate para disfrutar de la mejor comida, bebidas y un gran ambiente. ¡Arma tu orden desde aquí!</p>
+            <button class="btn-grande" onclick="cerrarBienvenida()" style="font-size: 1.2em; padding: 15px;">🍔 Ver el Menú 🍺</button>
+            <div style="font-size: 0.85em; color: #aaa; margin-top: 25px; letter-spacing: 0.5px;">
+                Menú creado por <br>
+                <a href="https://www.jrtechservice.tech" target="_blank" style="color: #666; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 5px; transition: color 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#666'">JR Tech Service TJ</a>
+            </div>
+        </div>
+    </div>
+
     <div class="sticky-container">
         <header>
-            <button class="btn-gerente" onclick="abrirLogin()">Gerente</button>
-            <img src="temporal.jpg" alt="Logo" class="logo-header">
+            <button class="btn-menu-hamburguesa" onclick="abrirMenuCategorias()">☰</button>
+            <img src="temporal.jpg" alt="Logo" class="logo-header" id="logo-empresa" oncontextmenu="return false;">
+            
+            <div id="contenedor-redes" class="contenedor-redes"></div>
         </header>
         <div class="indicador-deslizar">👈 DESLIZA PARA VER MÁS CATEGORÍAS 👉</div>
         <div class="nav-categorias" id="nav-container"></div>
@@ -123,18 +147,80 @@
         <span class="carrito-texto" id="bar-total">$0</span>
     </div>
 
+    <div class="modal-overlay" id="modal-categorias" style="align-items: flex-start; z-index: 260;">
+        <div class="modal-content" style="border-radius: 0 0 15px 15px; max-height: 80vh;">
+            <button class="btn-cerrar-x" onclick="cerrarMenuCategorias()">×</button>
+            <h3 style="text-align:center; color:var(--primary); margin-top:20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">Menú Rápido</h3>
+            <div id="lista-categorias-modal" style="display:flex; flex-direction:column; gap:10px; padding: 15px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="modal-carrito" style="align-items: flex-end; padding-bottom: 15px;">
-        <div class="modal-carrito-content">
+        <div class="modal-content" style="max-height: 85vh;">
             <div class="carrito-header"><h3>Tu Orden</h3></div>
             <div class="carrito-lista" id="lista-items-carrito"></div>
             <div class="carrito-footer">
                 <div class="total-row"><span>Total:</span><span id="total-carrito-texto">$0</span></div>
-                <div class="propina-row">
-                    Propina sugerida (10%): <span class="propina-monto" id="propina-10">$0</span><br>
-                    Propina ideal (15%): <span class="propina-monto" id="propina-15">$0</span>
+                <div class="grid-botones-carrito">
+                    <button class="btn-grande" onclick="cerrarModalCarrito()">🔙 Volver al Menú</button>
+                    <button class="btn-secundario" onclick="abrirMostrarPedido()">📄 Ver para Pedir</button>
+                    <button class="btn-secundario" onclick="abrirDividirCuenta()">➗ Dividir Cuenta</button>
+                    <button class="btn-vaciar" onclick="abrirConfirmarVaciar()">🗑️ Vaciar Carrito</button>
                 </div>
-                <button class="btn-grande" onclick="cerrarModalCarrito()">Seguir viendo menú</button>
-                <button class="btn-vaciar" onclick="vaciarCarrito()">🗑️ Vaciar toda la orden</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-mostrar-pedido" style="z-index: 260; align-items: center;">
+        <div class="modal-content" style="padding-bottom: 15px;">
+            <button class="btn-cerrar-x" onclick="cerrarMostrarPedido()">×</button>
+            <h3 style="text-align:center; color:var(--primary); margin-top:20px; margin-bottom:10px;">Orden a Preparar</h3>
+            <div id="lista-limpia-pedido" style="padding: 15px 25px; font-size: 1.1em; line-height: 1.5; max-height: 60vh; overflow-y: auto;"></div>
+            <div style="padding: 0 20px;">
+                <button class="btn-regresar" onclick="cerrarMostrarPedido()">Cerrar Vista</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-dividir-cuenta" style="z-index: 260; align-items: center;">
+        <div class="modal-content" style="padding: 25px 20px;">
+            <button class="btn-cerrar-x" onclick="cerrarDividirCuenta()">×</button>
+            <h3 style="text-align:center; margin-top:0; color: var(--primary);">Dividir Cuenta</h3>
+            
+            <div style="font-size: 1.3em; text-align: center; font-weight: bold; margin-bottom: 20px;">
+                Subtotal: <span id="dividir-subtotal">$0</span>
+            </div>
+
+            <label style="display:flex; align-items:center; gap:12px; background:#f9f9f9; padding:15px; border-radius:8px; border:1px solid #ddd; cursor:pointer; margin-bottom: 20px;">
+                <input type="checkbox" id="check-propina" onchange="calcularDivision()" style="transform: scale(1.5); cursor:pointer;">
+                <span style="font-size: 0.95em;">Agregar propina sugerida (10%): <br><strong id="dividir-propina-monto" style="color:var(--primary);">$0</strong></span>
+            </label>
+
+            <div style="margin-bottom:20px;">
+                <label style="font-weight:bold; display:block; margin-bottom:10px; text-align:center; color:#555;">¿Entre cuántas personas?</label>
+                <div style="display:flex; justify-content: center; align-items: center; gap:15px;">
+                    <button class="btn-cantidad" style="width:40px; height:40px; font-size:1.5em;" onclick="cambiarPersonas(-1)">-</button>
+                    <input type="number" id="input-personas" value="2" min="1" oninput="calcularDivision()" style="width:80px; text-align:center; font-size:1.5em; font-weight:bold; border:2px solid #ccc; border-radius:8px; padding: 5px;">
+                    <button class="btn-cantidad" style="width:40px; height:40px; font-size:1.5em;" onclick="cambiarPersonas(1)">+</button>
+                </div>
+            </div>
+
+            <div style="background: var(--success); color: white; padding: 20px; text-align: center; border-radius: 12px; margin-bottom: 15px;">
+                <span style="font-size:0.9em; display:block; margin-bottom:5px;">A pagar por persona:</span>
+                <span style="font-size:2.5em; font-weight:bold;" id="dividir-total-persona">$0</span>
+            </div>
+
+            <button class="btn-regresar" onclick="cerrarDividirCuenta()">Regresar al Carrito</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-confirmar-vaciar" style="z-index: 280; align-items: center;">
+        <div class="modal-content" style="padding: 25px 20px; text-align: center;">
+            <h3 style="color: var(--danger); margin-top: 0; font-size: 1.5em;">¿Vaciar orden?</h3>
+            <p style="color: #555; margin-bottom: 25px; line-height: 1.5;">Se eliminarán todos los platillos de tu cuenta. Esta acción no se puede deshacer.</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-regresar" style="margin:0;" onclick="cerrarConfirmarVaciar()">Cancelar</button>
+                <button class="btn-vaciar" style="margin:0; background: var(--danger); color: white; border: none;" onclick="ejecutarVaciarCarrito()">Sí, vaciar</button>
             </div>
         </div>
     </div>
@@ -168,6 +254,16 @@
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
         import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
+        // =========================================================
+        // ⚙️ PANEL DE CONFIGURACIÓN FÁCIL PARA REDES SOCIALES
+        // =========================================================
+        const CONFIG_REDES = {
+            facebook: "https://www.facebook.com/",
+            instagram: "https://www.instagram.com/",
+            tiktok: "https://www.tiktok.com/"
+        };
+        // =========================================================
+
         const firebaseConfig = {
             apiKey: "AIzaSyAc_eCxcvIJKFclNMApr9_fVDCDLShTLK8",
             authDomain: "menu-pho88-demo.firebaseapp.com",
@@ -184,7 +280,41 @@
         const ordenDeseado = ["Hamburguesa", "Wings & Boneless", "Nachos", "Papas", "Quesadillas", "Hot Dog", "Burrito", "Ensaladas", "Pechuga de Pollo", "Botanas", "Bebidas", "Coctelería", "Shots", "Botellas"];
         
         let carrito = [];
+        let totalCarrito = 0; 
         const TIEMPO_CADUCIDAD = 2 * 60 * 60 * 1000; 
+
+        window.cerrarBienvenida = () => {
+            document.getElementById('modal-bienvenida').style.display = 'none';
+            document.body.style.overflow = '';
+            sessionStorage.setItem('kboom_bienvenida_vista', 'true');
+        };
+
+        window.onload = () => {
+            if (!sessionStorage.getItem('kboom_bienvenida_vista')) {
+                document.getElementById('modal-bienvenida').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        function renderizarRedes() {
+            const contenedor = document.getElementById('contenedor-redes');
+            let html = '';
+            if(CONFIG_REDES.facebook) html += `<a href="${CONFIG_REDES.facebook}" target="_blank"><svg class="red-icono" viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"></path></svg></a>`;
+            if(CONFIG_REDES.instagram) html += `<a href="${CONFIG_REDES.instagram}" target="_blank"><svg class="red-icono" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="none" stroke="currentColor" stroke-width="2"></rect><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" fill="none" stroke="currentColor" stroke-width="2"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></line></svg></a>`;
+            if(CONFIG_REDES.tiktok) html += `<a href="${CONFIG_REDES.tiktok}" target="_blank"><svg class="red-icono" viewBox="0 0 24 24" fill="currentColor"><path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3V0Z"/></svg></a>`;
+            contenedor.innerHTML = html;
+        }
+        renderizarRedes();
+
+        let pressTimer;
+        const logoEmpresa = document.getElementById('logo-empresa');
+        const iniciarToque = (e) => { pressTimer = window.setTimeout(() => { abrirLogin(); }, 1500); };
+        const cancelarToque = () => { clearTimeout(pressTimer); };
+        logoEmpresa.addEventListener('mousedown', iniciarToque);
+        logoEmpresa.addEventListener('touchstart', iniciarToque);
+        logoEmpresa.addEventListener('mouseup', cancelarToque);
+        logoEmpresa.addEventListener('mouseleave', cancelarToque);
+        logoEmpresa.addEventListener('touchend', cancelarToque);
 
         window.obtenerFotoCategoria = (categoria) => {
             if (!categoria) return 'temporal.jpg'; 
@@ -198,9 +328,8 @@
             if (cat.includes('hot dog') || cat.includes('hotdog')) return 'fotos/hotdog.jpg';
             if (cat.includes('burrito')) return 'fotos/burrito.jpg';
             if (cat.includes('ensalada')) return 'fotos/ensaladas.jpg';
-            if (cat.includes('pechuga')) return 'fotos/pollof.jpg';
+            if (cat.includes('pechuga') || cat.includes('pollo')) return 'fotos/pollo.jpg';
             if (cat.includes('botana')) return 'fotos/botanas.jpg';
-            
             if (cat.includes('coctel') || cat.includes('cocteleria')) return 'fotos/cocteles.jpg';
             if (cat.includes('shot')) return 'fotos/shots.jpg';
             if (cat.includes('botella')) return 'fotos/botellas.jpg';
@@ -256,11 +385,11 @@
                 bar.style.display = 'none'; document.getElementById('modal-carrito').style.display = 'none'; document.body.style.overflow = ''; return; 
             }
             bar.style.display = 'flex';
-            let total = 0; let totalItems = 0; let htmlLista = '';
+            totalCarrito = 0; let totalItems = 0; let htmlLista = '';
             
             carrito.forEach((item, index) => {
                 let subtotal = parseFloat(item.precioUnitario) * item.cantidad;
-                total += subtotal; totalItems += item.cantidad;
+                totalCarrito += subtotal; totalItems += item.cantidad;
                 let txtCategoria = item.categoria ? `<span class="item-carrito-categoria">${item.categoria}</span>` : '';
                 let txtTamaño = item.tamaño ? `<span class="item-carrito-detalle">Tamaño: ${item.tamaño}</span>` : '';
                 
@@ -281,29 +410,87 @@
             });
 
             document.getElementById('bar-cantidad').innerText = totalItems;
-            document.getElementById('bar-total').innerText = `$${total}`;
+            document.getElementById('bar-total').innerText = `$${totalCarrito}`;
             document.getElementById('lista-items-carrito').innerHTML = htmlLista;
-            document.getElementById('total-carrito-texto').innerText = `$${total}`;
-            document.getElementById('propina-10').innerText = `$${(total * 0.10).toFixed(2)}`;
-            document.getElementById('propina-15').innerText = `$${(total * 0.15).toFixed(2)}`;
+            document.getElementById('total-carrito-texto').innerText = `$${totalCarrito}`;
         }
 
-        // --- BLOQUEAR SCROLL DE FONDO EN MODALES CLIENTE ---
-        window.abrirModalCarrito = () => {
-            document.getElementById('modal-carrito').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        };
-        window.cerrarModalCarrito = () => {
-            document.getElementById('modal-carrito').style.display = 'none';
-            document.body.style.overflow = '';
-        };
+        window.abrirMenuCategorias = () => { document.getElementById('modal-categorias').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        window.cerrarMenuCategorias = () => { document.getElementById('modal-categorias').style.display = 'none'; document.body.style.overflow = ''; }
+
+        window.abrirModalCarrito = () => { document.getElementById('modal-carrito').style.display = 'flex'; document.body.style.overflow = 'hidden'; };
+        window.cerrarModalCarrito = () => { document.getElementById('modal-carrito').style.display = 'none'; document.body.style.overflow = ''; };
         
-        window.vaciarCarrito = () => { if(confirm('¿Vaciar orden?')) { carrito = []; actualizarCarritoUI(); guardarCarritoEnMemoria(); } }
+        // --- NUEVO SISTEMA DE CONFIRMACIÓN PARA VACIAR CARRITO ---
+        window.abrirConfirmarVaciar = () => {
+            if(carrito.length === 0) return;
+            document.getElementById('modal-confirmar-vaciar').style.display = 'flex';
+        };
+
+        window.cerrarConfirmarVaciar = () => {
+            document.getElementById('modal-confirmar-vaciar').style.display = 'none';
+        };
+
+        window.ejecutarVaciarCarrito = () => {
+            carrito = [];
+            actualizarCarritoUI();
+            guardarCarritoEnMemoria();
+            cerrarConfirmarVaciar();
+            cerrarModalCarrito(); 
+        };
+        // ---------------------------------------------------------
         
+        window.abrirMostrarPedido = () => {
+            if (carrito.length === 0) return;
+            let htmlLimpio = '';
+            carrito.forEach(item => {
+                let txtTamaño = item.tamaño ? `<div style="color:#777; font-size:0.85em; margin-left: 28px;">▶ ${item.tamaño}</div>` : '';
+                htmlLimpio += `
+                    <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+                        <span style="color:var(--primary); font-weight:bold; font-size:1.2em; display:inline-block; width:25px;">${item.cantidad}x</span> 
+                        <span style="font-weight:bold; font-size:1.1em; color:#222;">${item.nombre}</span>
+                        ${txtTamaño}
+                    </div>`;
+            });
+            document.getElementById('lista-limpia-pedido').innerHTML = htmlLimpio;
+            document.getElementById('modal-mostrar-pedido').style.display = 'flex';
+        }
+        window.cerrarMostrarPedido = () => { document.getElementById('modal-mostrar-pedido').style.display = 'none'; }
+
+        window.abrirDividirCuenta = () => {
+            if (carrito.length === 0) return;
+            document.getElementById('input-personas').value = "2";
+            document.getElementById('check-propina').checked = false;
+            calcularDivision();
+            document.getElementById('modal-dividir-cuenta').style.display = 'flex';
+        }
+        window.cerrarDividirCuenta = () => { document.getElementById('modal-dividir-cuenta').style.display = 'none'; }
+        window.cambiarPersonas = (delta) => {
+            let input = document.getElementById('input-personas');
+            let valorActual = parseInt(input.value);
+            if (isNaN(valorActual)) valorActual = 1;
+            let nuevoValor = valorActual + delta;
+            if (nuevoValor < 1) nuevoValor = 1; 
+            input.value = nuevoValor;
+            calcularDivision();
+        }
+        window.calcularDivision = () => {
+            let propinaSugerida = totalCarrito * 0.10;
+            let agregarPropina = document.getElementById('check-propina').checked;
+            let granTotal = totalCarrito + (agregarPropina ? propinaSugerida : 0);
+            let personas = parseInt(document.getElementById('input-personas').value);
+            if (isNaN(personas) || personas < 1) personas = 1;
+            let totalPorPersona = granTotal / personas;
+
+            document.getElementById('dividir-subtotal').innerText = `$${totalCarrito.toFixed(2)}`;
+            document.getElementById('dividir-propina-monto').innerText = `$${propinaSugerida.toFixed(2)}`;
+            document.getElementById('dividir-total-persona').innerText = `$${totalPorPersona.toFixed(2)}`;
+        }
+
         window.irACategoria = (id) => {
             const elemento = document.getElementById(id);
             if(elemento) {
-                const headerOffset = 140; 
+                const headerOffset = 160; 
                 const elementPosition = elemento.getBoundingClientRect().top;
                 const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
                 window.scrollTo({ top: offsetPosition, behavior: "smooth" });
@@ -322,6 +509,7 @@
         async function cargarMenu() {
             const contenedor = document.getElementById('menu-container');
             const navContainer = document.getElementById('nav-container');
+            const modalNavContainer = document.getElementById('lista-categorias-modal');
             try {
                 const querySnapshot = await getDocs(collection(db, "platillos"));
                 const todosLosPlatillos = []; const menuAgrupado = {};
@@ -336,7 +524,7 @@
                     menuAgrupado[catNormalizada].push(p);
                 });
 
-                let htmlFinal = ''; let navHtml = '';
+                let htmlFinal = ''; let navHtml = ''; let modalNavHtml = '';
                 const destacados = todosLosPlatillos.filter(p => p.destacado === true);
                 if(destacados.length > 0) {
                     htmlFinal += `<div class="seccion-carrusel"><h2 class="titulo-carrusel">⭐ Especialidad de la casa</h2><button class="flecha-btn flecha-izq" onclick="moverCarrusel('track-destacados', 'izq')">❮</button><div class="carrusel-track" id="track-destacados">`;
@@ -367,6 +555,8 @@
 
                     let catId = "cat-" + textoSeguro(cat);
                     navHtml += `<button class="nav-btn" onclick="irACategoria('${catId}')">${cat}</button>`;
+                    modalNavHtml += `<button class="btn-secundario" style="justify-content: flex-start; padding: 15px; border-color:var(--primary); color:var(--primary);" onclick="irACategoria('${catId}'); cerrarMenuCategorias();">🍽️ ${cat}</button>`;
+
                     htmlFinal += `<h2 id="${catId}" class="titulo-categoria">${cat}</h2><div class="menu-grid">`;
                     
                     menuAgrupado[cat].forEach(p => {
@@ -390,7 +580,10 @@
 
                 ordenDeseado.forEach(cat => generarSeccionGrid(cat));
                 for (const cat in menuAgrupado) { if (!categoriasMostradas.has(cat)) generarSeccionGrid(cat); }
-                navContainer.innerHTML = navHtml; contenedor.innerHTML = htmlFinal;
+                
+                navContainer.innerHTML = navHtml; 
+                contenedor.innerHTML = htmlFinal;
+                modalNavContainer.innerHTML = modalNavHtml;
 
             } catch (e) { console.error(e); }
         }
@@ -474,12 +667,12 @@
                 }
             }
             document.getElementById('modal-detalle').style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Bloquear scroll
+            document.body.style.overflow = 'hidden'; 
         }
 
         window.cerrarDetalle = () => {
             document.getElementById('modal-detalle').style.display = 'none';
-            document.body.style.overflow = ''; // Restaurar scroll
+            document.body.style.overflow = ''; 
         };
         
         window.abrirLogin = () => {
@@ -493,7 +686,7 @@
 
         document.getElementById('btn-iniciar-sesion').onclick = () => {
             const email = document.getElementById('login-email').value; const pass = document.getElementById('login-password').value;
-            signInWithEmailAndPassword(auth, email, pass).then(() => window.location.href = 'administrador.html').catch(() => alert("Error"));
+            signInWithEmailAndPassword(auth, email, pass).then(() => window.location.href = 'administrador.html').catch(() => alert("Error al entrar, verifica tus datos."));
         };
 
         cargarCarritoGuardado(); cargarMenu();
