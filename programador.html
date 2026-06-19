@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Maestro - JR Tech Service</title>
+    <style>
+        :root { --primary: #00e676; --bg: #0d1117; --card: #161b22; --text: #c9d1d9; }
+        body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; background-color: var(--bg); color: var(--text); }
+        h1 { color: var(--primary); text-transform: uppercase; border-bottom: 2px solid #30363d; padding-bottom: 10px; font-weight: 900; letter-spacing: 2px;}
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .seccion-config { background: var(--card); border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .seccion-titulo { color: #58a6ff; font-size: 1.2em; font-weight: bold; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;}
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #8b949e; font-size: 0.9em; text-transform: uppercase;}
+        input[type="text"], input[type="url"], select { width: 100%; padding: 10px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 5px; box-sizing: border-box; font-family: inherit; transition: 0.2s;}
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 5px rgba(0, 230, 118, 0.3);}
+        
+        .btn-guardar { background: var(--primary); color: #000; font-weight: 900; border: none; padding: 15px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 1.1em; text-transform: uppercase; transition: 0.2s; font-family: inherit; margin-top: 10px;}
+        .btn-guardar:hover { background: #00c853; box-shadow: 0 0 15px rgba(0, 230, 118, 0.4);}
+        .btn-guardar:disabled { background: #30363d; color: #8b949e; cursor: not-allowed; }
+
+        .alerta-flotante { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #000; padding: 15px 25px; border-radius: 5px; font-weight: bold; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.5); animation: popIn 0.3s ease-out;}
+        @keyframes popIn { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .badge-dev { background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; border: 1px solid rgba(88, 166, 255, 0.3); float: right;}
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⚙️ Panel Maestro <span class="badge-dev">Acceso Desarrollador</span></h1>
+        <p style="color: #8b949e; margin-bottom: 30px;">Configuración global del sistema. Los cambios impactarán el Front-End en tiempo real.</p>
+
+        <div class="seccion-config">
+            <h2 class="seccion-titulo">🔧 Arquitectura del Sistema</h2>
+            <div class="form-group">
+                <label>Modo de Operación</label>
+                <select id="config-modo">
+                    <option value="caja">🍔 Modo Food Truck (Cobro en Caja / Fast Food)</option>
+                    <option value="mesas">🍽️ Modo Restaurante (Cobro al final / Mesas con QR)</option>
+                </select>
+                <small style="color:#8b949e; display:block; margin-top:5px;">El Modo Restaurante requiere URLs con parámetro "?mesa=".</small>
+            </div>
+        </div>
+
+        <div class="seccion-config">
+            <h2 class="seccion-titulo">📝 Interfaz Dinámica (Textos)</h2>
+            <div class="form-group">
+                <label>Título Riel Destacados (Ej. Especialidad, Favoritos)</label>
+                <input type="text" id="txt-destacados" placeholder="⭐ Especialidad de la casa">
+            </div>
+            <div class="form-group">
+                <label>Título Riel Ofertas (Ej. Promo Navideña, Descuentos)</label>
+                <input type="text" id="txt-ofertas" placeholder="🔥 Ofertas del Día">
+            </div>
+        </div>
+
+        <div class="seccion-config">
+            <h2 class="seccion-titulo">🌐 Enlaces de Redes Sociales</h2>
+            <div class="form-group">
+                <label>URL Facebook</label>
+                <input type="url" id="url-fb" placeholder="https://facebook.com/tulocal">
+            </div>
+            <div class="form-group">
+                <label>URL Instagram</label>
+                <input type="url" id="url-ig" placeholder="https://instagram.com/tulocal">
+            </div>
+            <div class="form-group">
+                <label>URL TikTok</label>
+                <input type="url" id="url-tk" placeholder="https://tiktok.com/@tulocal">
+            </div>
+        </div>
+
+        <button class="btn-guardar" id="btn-salvar" onclick="guardarConfiguracionGlobal()">Implementar Cambios en Servidor</button>
+    </div>
+
+    <div class="alerta-flotante" id="alerta-exito">✅ Configuraciones sincronizadas con éxito.</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc_eCxcvIJKFclNMApr9_fVDCDLShTLK8",
+            authDomain: "menu-pho88-demo.firebaseapp.com",
+            projectId: "menu-pho88-demo",
+            storageBucket: "menu-pho88-demo.firebasestorage.app",
+            messagingSenderId: "100888777359",
+            appId: "1:100888777359:web:5f2946bebba884858216fa"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const docRef = doc(db, "configuracion", "global");
+
+        // Protección de acceso
+        onAuthStateChanged(auth, (user) => {
+            if (!user) window.location.href = "index.html";
+            else cargarConfiguracionActual();
+        });
+
+        async function cargarConfiguracionActual() {
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('config-modo').value = data.modoOperacion || 'caja';
+                    document.getElementById('txt-destacados').value = data.tituloDestacados || '⭐ Especialidad de la casa';
+                    document.getElementById('txt-ofertas').value = data.tituloOfertas || '🔥 Ofertas del Día';
+                    document.getElementById('url-fb').value = data.redes?.facebook || '';
+                    document.getElementById('url-ig').value = data.redes?.instagram || '';
+                    document.getElementById('url-tk').value = data.redes?.tiktok || '';
+                }
+            } catch (error) {
+                console.error("Error al cargar config:", error);
+            }
+        }
+
+        window.guardarConfiguracionGlobal = async () => {
+            const btn = document.getElementById('btn-salvar');
+            btn.innerText = "⏳ Sincronizando...";
+            btn.disabled = true;
+
+            const nuevaConfig = {
+                modoOperacion: document.getElementById('config-modo').value,
+                tituloDestacados: document.getElementById('txt-destacados').value || '⭐ Especialidad de la casa',
+                tituloOfertas: document.getElementById('txt-ofertas').value || '🔥 Ofertas del Día',
+                redes: {
+                    facebook: document.getElementById('url-fb').value,
+                    instagram: document.getElementById('url-ig').value,
+                    tiktok: document.getElementById('url-tk').value
+                }
+            };
+
+            try {
+                // merge: true actualiza sin borrar otros datos que pudieras tener ahí
+                await setDoc(docRef, nuevaConfig, { merge: true }); 
+                
+                const alerta = document.getElementById('alerta-exito');
+                alerta.style.display = 'block';
+                setTimeout(() => alerta.style.display = 'none', 3000);
+            } catch (error) {
+                alert("Error al guardar: " + error.message);
+            } finally {
+                btn.innerText = "Implementar Cambios en Servidor";
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

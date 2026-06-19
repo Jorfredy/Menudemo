@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador de Menú</title>
+    <style>
+        :root { --primary: #e65100; --bg: #f4f6f8; --text: #333; --danger: #e53935; --success: #43a047;}
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background-color: var(--bg); color: var(--text); padding-bottom: 20px; display: none; }
+        
+        /* CABECERA UNIVERSAL */
+        header { background-color: #000; color: white; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100;}
+        header h1 { margin: 0; font-size: 1.6em; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 900;}
+        
+        .nav-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px;}
+        .btn-navegar { background: #222; border: 1px solid #333; color: #aaa; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; transition: all 0.2s ease; font-size: 0.95em;}
+        .btn-navegar:hover { background: #333; color: white; border-color: #444;}
+        .btn-navegar.active { background: var(--primary); border-color: var(--primary); color: white; pointer-events: none; box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3);}
+        .btn-salir { background: rgba(255,255,255,0.1); border: 1px solid #555; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-salir:hover { background: rgba(255,255,255,0.2); }
+
+        /* CONTENEDOR PRINCIPAL */
+        .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
+        
+        .caja-instrucciones { background-color: #ffe0b2; color: #e65100; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-size: 0.9em; border-left: 4px solid var(--primary); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .caja-instrucciones p { margin: 5px 0; line-height: 1.4; }
+        
+        .filtros-container { display: flex; gap: 10px; margin-bottom: 25px; }
+        .filtros-container input { flex: 2; padding: 12px 15px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 1em; outline: none; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .filtros-container input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(230,81,0,0.1); }
+        .filtros-container select { flex: 1.2; padding: 12px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; background-color: white; color: var(--text); cursor: pointer; outline: none; transition: 0.2s;}
+        .filtros-container select:focus { border-color: var(--primary); }
+
+        .grid-platillos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px;}
+        
+        .item-platillo { background: white; padding: 15px 10px; border-radius: 12px; text-align: center; cursor: pointer; position: relative; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 10px rgba(230, 81, 0, 0.08); border: 1px solid rgba(230, 81, 0, 0.15);
+        }
+        .item-platillo:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(230, 81, 0, 0.15); border-color: rgba(230, 81, 0, 0.4); }
+        .item-platillo:active { transform: scale(0.96); }
+        
+        .item-titulo { font-size: 0.95em; font-weight: bold; margin-bottom: 5px; color: #222; }
+        .item-precio { font-size: 0.8em; color: #666; margin: 8px 0; line-height: 1.4;}
+        .item-categoria { font-size: 0.7em; background: #eee; padding: 4px 8px; border-radius: 6px; color: #555; font-weight: bold; text-transform: uppercase;}
+        .badge-agotado { background: var(--danger); color: white; font-size: 0.65em; padding: 3px 8px; border-radius: 6px; position: absolute; top: -8px; left: -8px; font-weight: bold; box-shadow: 0 2px 5px rgba(229,57,53,0.4);}
+        .badge-destacado { color: #f57c00; font-size: 0.75em; font-weight: bold; display: block; margin-top: 8px; background: #fff3e0; border-radius: 4px; padding: 2px;}
+        
+        .paginacion-container { display: flex; justify-content: center; gap: 20px; align-items: center; padding: 15px; margin-bottom: 60px;}
+        .btn-paginacion { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-paginacion:hover:not(:disabled) { background: #d84315; }
+        .btn-paginacion:disabled { background: #ccc; cursor: not-allowed; }
+        .paginacion-info { font-weight: bold; color: #555; background: white; padding: 8px 15px; border-radius: 8px; border: 1px solid #ddd; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 20; justify-content: center; align-items: flex-end; backdrop-filter: blur(3px); }
+        .modal-content { background: white; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 25px 20px; box-sizing: border-box; animation: slideUp 0.3s ease-out;}
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: var(--primary); text-align: center; font-size: 1.4em;}
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 6px; color: #555;}
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; font-size: 1em; background: #fafafa; outline: none; transition: 0.2s;}
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px rgba(230,81,0,0.1);}
+        .flex-precios { display: flex; gap: 10px; }
+        
+        .switch-container { display: flex; align-items: center; justify-content: space-between; margin: 12px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 1px solid #eee;}
+        .switch { position: relative; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 24px; transition: .3s; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: .3s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        input.agotado-switch:checked + .slider { background-color: var(--danger); }
+
+        .btn-principal { width: 100%; background: var(--primary); color: white; padding: 14px; border: none; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+        .btn-principal:hover { background: #d84315; }
+        .btn-secundario { width: 100%; background: white; color: var(--text); border: 2px solid #ddd; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; display: flex; justify-content: center; align-items: center; gap: 8px; transition: 0.2s;}
+        .btn-secundario:hover { border-color: #bbb; background: #fafafa;}
+        .btn-cancelar { width: 100%; background: none; color: #888; border: none; padding: 12px; margin-top: 5px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-cancelar:hover { color: #555; }
+        .btn-eliminar { width: 100%; background: #fff0f0; color: var(--danger); border: 1px solid #ffcdd2; padding: 12px; margin-top: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-eliminar:hover { background: var(--danger); color: white; }
+        .btn-flotante { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; width: 65px; height: 65px; border-radius: 50%; font-size: 35px; border: none; box-shadow: 0 6px 15px rgba(46,125,50,0.4); z-index: 15; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s;}
+        .btn-flotante:hover { transform: scale(1.05); box-shadow: 0 8px 20px rgba(46,125,50,0.5); }
+        .btn-flotante:active { transform: scale(0.95); }
+
+        /* ESTILOS PARA ALERTA PERSONALIZADA */
+        .btn-mitad { flex: 1; padding: 12px; font-size: 1.1em; font-weight: bold; border-radius: 8px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; flex-direction: column;">
+            <div class="nav-bar">
+			    <a href="index.html" class="btn-navegar">Regresar Al Menu</a>
+                <a href="ordenes.html" class="btn-navegar">Órdenes y Caja</a>
+                <a href="ventas.html" class="btn-navegar">Reporte de Ventas</a>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
+            <button class="btn-salir" id="btn-cerrar-sesion">Salir</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="caja-instrucciones">
+            <p>💡 <b>¿Cómo funciona?</b></p>
+            <p>• <b>Toca un platillo</b> para destacar, marcar como agotado o agregar ofertas.</p>
+            <p>• <b>Edición completa:</b> Dentro de ese menú rápido, elige "✏️ Editar Información".</p>
+        </div>
+
+        <div class="filtros-container">
+            <input type="text" id="buscador" placeholder="🔍 Buscar por nombre..." onkeyup="filtrarPlatillos()">
+            <select id="filtro-categoria" onchange="filtrarPlatillos()">
+                <option value="todas">Todas las categorías</option>
+            </select>
+        </div>
+
+        <div id="grid-container" class="grid-platillos"></div>
+
+        <div class="paginacion-container">
+            <button id="btn-prev" class="btn-paginacion" onclick="cambiarPagina(-1)">⬅ Anterior</button>
+            <span class="paginacion-info" id="paginacion-info">Página 1 de 1</span>
+            <button id="btn-next" class="btn-paginacion" onclick="cambiarPagina(1)">Siguiente ➡</button>
+        </div>
+    </div>
+
+    <button class="btn-flotante" onclick="abrirModalCrear()">+</button>
+
+    <div class="modal-overlay" id="modal-acciones">
+        <div class="modal-content">
+            <h3 id="acc-titulo">Nombre Platillo</h3>
+            <div id="contenedor-ofertas"></div>
+            <div class="switch-container">
+                <label style="font-weight: bold; color: #f57c00;">⭐ Destacar (Sugerencia)</label>
+                <label class="switch"><input type="checkbox" id="acc-destacar"><span class="slider"></span></label>
+            </div>
+            <div class="switch-container">
+                <label style="color: var(--danger); font-weight: bold;">🚫 Marcar como Agotado</label>
+                <label class="switch"><input type="checkbox" id="acc-agotado" class="agotado-switch"><span class="slider"></span></label>
+            </div>
+            <button class="btn-principal" onclick="guardarAccionesRapidas()">💾 Guardar Estado</button>
+            <button class="btn-secundario" onclick="abrirEdicionCompleta()">✏️ Editar Toda la Información</button>
+            <button class="btn-cancelar" onclick="cerrarModales()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-form">
+        <div class="modal-content">
+            <h3 id="form-titulo">Información del Producto</h3>
+            <div class="input-group">
+                <label>Nombre <span style="color:red">*</span></label>
+                <input type="text" id="f-nombre" placeholder="Ej. Hamburguesa K-Boom">
+            </div>
+            
+            <div class="input-group">
+                <label>Categoría <span style="color:red">*</span></label>
+                <select id="f-categoria" onchange="verificarCategoriaNueva()">
+                    <option value="">Selecciona una opción...</option>
+                    <option value="Hamburguesa">Hamburguesa</option>
+                    <option value="Wings & Boneless">Wings & Boneless</option>
+                    <option value="Nachos">Nachos</option>
+                    <option value="Papas">Papas</option>
+                    <option value="Quesadillas">Quesadillas</option>
+                    <option value="Hot Dog">Hot Dog</option>
+                    <option value="Burrito">Burrito</option>
+                    <option value="Ensaladas">Ensaladas</option>
+                    <option value="Pechuga de Pollo">Pechuga de Pollo</option>
+                    <option value="Botanas">Botanas</option>
+                    <option value="Bebidas">Bebidas</option>
+                    <option value="Coctelería">Coctelería</option>
+                    <option value="Shots">Shots</option>
+                    <option value="Botellas">Botellas</option>
+                    <option value="OTRA">➕ Escribir otra nueva...</option>
+                </select>
+                <input type="text" id="f-categoria-nueva" placeholder="Escribe el nombre de la categoría..." style="display:none; margin-top:10px;">
+            </div>
+
+            <div class="input-group">
+                <label>Descripción (Opcional)</label>
+                <textarea id="f-desc" rows="2" placeholder="Ingredientes..."></textarea>
+            </div>
+            <p style="font-size: 0.85em; color: #555; font-weight: bold; margin-bottom: 5px;">Precio (Llena al menos uno) <span style="color:red">*</span></p>
+            <div class="flex-precios">
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Chico ($)</label>
+                    <input type="number" id="f-precio-chico">
+                </div>
+                <div class="input-group" style="margin-bottom: 0;">
+                    <label>Grande ($)</label>
+                    <input type="number" id="f-precio-grande">
+                </div>
+            </div>
+            <button class="btn-principal" onclick="guardarInformacionCompleta()" style="margin-top: 20px;">💾 Guardar Información</button>
+            <button id="btn-eliminar-producto" class="btn-eliminar" onclick="eliminarProducto()">🗑️ Eliminar Producto</button>
+            <button class="btn-cancelar" onclick="cerrarModales()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-alerta" style="z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-content" style="max-width: 350px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border-radius: 15px;">
+            <div id="alerta-icono" style="font-size: 4em; margin-bottom: 5px;">⚠️</div>
+            <h2 id="alerta-titulo" style="margin-top: 0; color: #222;">Título</h2>
+            <p id="alerta-mensaje" style="color: #666; font-size: 1.1em; line-height: 1.4; margin-bottom: 25px;">Mensaje</p>
+            <div id="alerta-botones" style="display: flex; gap: 10px;"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, doc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc_eCxcvIJKFclNMApr9_fVDCDLShTLK8",
+            authDomain: "menu-pho88-demo.firebaseapp.com",
+            projectId: "menu-pho88-demo",
+            storageBucket: "menu-pho88-demo.firebasestorage.app",
+            messagingSenderId: "100888777359",
+            appId: "1:100888777359:web:5f2946bebba884858216fa"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- SISTEMA DE DIÁLOGOS BONITOS ---
+        window.mostrarAlerta = (titulo, mensaje, icono = 'ℹ️') => {
+            return new Promise((resolve) => {
+                document.getElementById('alerta-icono').innerText = icono;
+                document.getElementById('alerta-titulo').innerText = titulo;
+                document.getElementById('alerta-mensaje').innerHTML = mensaje;
+                document.getElementById('alerta-botones').innerHTML = `<button class="btn-mitad" style="background:var(--primary); color:white;" id="btn-alerta-ok">Aceptar</button>`;
+                document.getElementById('modal-alerta').style.display = 'flex';
+                document.getElementById('btn-alerta-ok').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(true); };
+            });
+        };
+
+        window.mostrarConfirmacion = (titulo, mensaje, txtBtn = "Aceptar", icono = '❓', color = "var(--primary)") => {
+            return new Promise((resolve) => {
+                document.getElementById('alerta-icono').innerText = icono;
+                document.getElementById('alerta-titulo').innerText = titulo;
+                document.getElementById('alerta-mensaje').innerHTML = mensaje; 
+                document.getElementById('alerta-botones').innerHTML = `
+                    <button class="btn-mitad" style="background:#eee; color:#555;" id="btn-alerta-cancelar">Cancelar</button>
+                    <button class="btn-mitad" style="background:${color}; color:white;" id="btn-alerta-confirmar">${txtBtn}</button>
+                `;
+                document.getElementById('modal-alerta').style.display = 'flex';
+                document.getElementById('btn-alerta-cancelar').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(false); };
+                document.getElementById('btn-alerta-confirmar').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(true); };
+            });
+        };
+
+        const ordenDeseado = ["Hamburguesa", "Wings & Boneless", "Nachos", "Papas", "Quesadillas", "Hot Dog", "Burrito", "Ensaladas", "Pechuga de Pollo", "Botanas", "Bebidas", "Coctelería", "Shots", "Botellas"];
+
+        let idEditando = null;
+        let platilloActual = null;
+        
+        let todosLosPlatillos = [];
+        let platillosFiltrados = [];
+        let paginaActual = 1; 
+        const ITEMS_POR_PAGINA = 10;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { document.body.style.display = "block"; escucharDatos(); }
+            else { window.location.href = "index.html"; }
+        });
+
+        function escucharDatos() {
+            onSnapshot(collection(db, "platillos"), (snap) => {
+                todosLosPlatillos = [];
+                let categoriasEncontradas = new Set();
+                const selectFiltro = document.getElementById('filtro-categoria');
+                let categoriaSeleccionadaActualmente = selectFiltro.value;
+
+                snap.forEach((d) => {
+                    const p = d.data(); p.id = d.id;
+                    todosLosPlatillos.push(p);
+                    categoriasEncontradas.add(p.categoria || 'General');
+                });
+
+                let opcionesHtml = '<option value="todas">Todas las categorías</option>';
+                Array.from(categoriasEncontradas).sort().forEach(cat => {
+                    opcionesHtml += `<option value="${cat}">${cat}</option>`;
+                });
+                selectFiltro.innerHTML = opcionesHtml;
+                if (categoriasEncontradas.has(categoriaSeleccionadaActualmente)) selectFiltro.value = categoriaSeleccionadaActualmente;
+
+                filtrarPlatillos(false); 
+            });
+        }
+
+        window.filtrarPlatillos = function(resetPage = true) {
+            let textoBuscado = document.getElementById('buscador').value.toLowerCase();
+            let catSeleccionada = document.getElementById('filtro-categoria').value;
+            
+            platillosFiltrados = todosLosPlatillos.filter(p => {
+                let titulo = p.nombre.toLowerCase();
+                let categoriaItem = p.categoria || 'General';
+                let coincideTexto = titulo.includes(textoBuscado);
+                let coincideCategoria = (catSeleccionada === 'todas') || (categoriaItem === catSeleccionada);
+                return coincideTexto && coincideCategoria;
+            });
+            
+            platillosFiltrados.sort((a, b) => {
+                let catA = (a.categoria || 'Extras').trim();
+                let catB = (b.categoria || 'Extras').trim();
+                const textoSeguro = (txt) => txt.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, '');
+                let matchA = ordenDeseado.find(c => textoSeguro(c) === textoSeguro(catA));
+                let matchB = ordenDeseado.find(c => textoSeguro(c) === textoSeguro(catB));
+                let indexA = matchA ? ordenDeseado.indexOf(matchA) : 999;
+                let indexB = matchB ? ordenDeseado.indexOf(matchB) : 999;
+                if (indexA !== indexB) return indexA - indexB;
+                return a.nombre.localeCompare(b.nombre);
+            });
+            
+            if(resetPage) paginaActual = 1;
+            
+            let totalPaginas = Math.ceil(platillosFiltrados.length / ITEMS_POR_PAGINA) || 1;
+            if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+
+            renderPaginacion();
+        }
+
+        function renderPaginacion() {
+            const cont = document.getElementById('grid-container');
+            cont.innerHTML = '';
+            
+            let inicio = (paginaActual - 1) * ITEMS_POR_PAGINA;
+            let fin = inicio + ITEMS_POR_PAGINA;
+            let paginados = platillosFiltrados.slice(inicio, fin);
+            
+            paginados.forEach(p => {
+                let txtPrecio = '';
+                if(p.precioChico) txtPrecio += `Chico: $${p.precioChico} ${p.ofertaChico ? '(🔥 $'+p.ofertaChico+')' : ''}<br>`;
+                if(p.precioGrande) txtPrecio += `Grande: $${p.precioGrande} ${p.ofertaGrande ? '(🔥 $'+p.ofertaGrande+')' : ''}`;
+
+                cont.innerHTML += `
+                    <div class="item-platillo" onclick="abrirAcciones('${p.id}', ${JSON.stringify(p).replace(/"/g, '&quot;')})">
+                        ${p.agotado ? '<span class="badge-agotado">AGOTADO</span>' : ''}
+                        <p class="item-titulo">${p.nombre}</p>
+                        <span class="item-categoria">${p.categoria || 'General'}</span>
+                        <p class="item-precio">${txtPrecio}</p>
+                        ${p.destacado ? '<span class="badge-destacado">⭐ Sugerencia</span>' : ''}
+                    </div>
+                `;
+            });
+
+            let totalPaginas = Math.ceil(platillosFiltrados.length / ITEMS_POR_PAGINA) || 1;
+            document.getElementById('paginacion-info').innerText = `Página ${paginaActual} de ${totalPaginas}`;
+            document.getElementById('btn-prev').disabled = paginaActual === 1;
+            document.getElementById('btn-next').disabled = paginaActual === totalPaginas;
+        }
+
+        window.cambiarPagina = (delta) => {
+            paginaActual += delta;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            renderPaginacion();
+        }
+
+        window.verificarCategoriaNueva = () => {
+            if(document.getElementById('f-categoria').value === 'OTRA') {
+                document.getElementById('f-categoria-nueva').style.display = 'block';
+            } else {
+                document.getElementById('f-categoria-nueva').style.display = 'none';
+            }
+        }
+
+        window.abrirAcciones = (id, p) => {
+            idEditando = id; platilloActual = p; 
+            document.getElementById('acc-titulo').innerText = p.nombre;
+            let htmlOfertas = '';
+            if (p.precioChico) htmlOfertas += `<div class="input-group"><label style="color:var(--danger)">🔥 Oferta Chico (Normal: $${p.precioChico})</label><input type="number" id="acc-oferta-chico" value="${p.ofertaChico || ''}" placeholder="Deja vacío para quitar"></div>`;
+            if (p.precioGrande) htmlOfertas += `<div class="input-group"><label style="color:var(--danger)">🔥 Oferta Grande (Normal: $${p.precioGrande})</label><input type="number" id="acc-oferta-grande" value="${p.ofertaGrande || ''}" placeholder="Deja vacío para quitar"></div>`;
+            if (!p.precioChico && !p.precioGrande) htmlOfertas += `<div class="input-group"><label style="color:var(--danger)">🔥 Oferta Especial</label><input type="number" id="acc-oferta-chico" value="${p.ofertaChico || p.oferta || ''}"></div>`;
+            document.getElementById('contenedor-ofertas').innerHTML = htmlOfertas;
+            document.getElementById('acc-destacar').checked = p.destacado || false;
+            document.getElementById('acc-agotado').checked = p.agotado || false;
+            document.getElementById('modal-form').style.display = 'none';
+            document.getElementById('modal-acciones').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.guardarAccionesRapidas = async () => {
+            const valChico = document.getElementById('acc-oferta-chico') ? document.getElementById('acc-oferta-chico').value : "";
+            const valGrande = document.getElementById('acc-oferta-grande') ? document.getElementById('acc-oferta-grande').value : "";
+            const ref = doc(db, "platillos", idEditando);
+            await updateDoc(ref, { ofertaChico: valChico, ofertaGrande: valGrande, destacado: document.getElementById('acc-destacar').checked, agotado: document.getElementById('acc-agotado').checked, oferta: "" });
+            cerrarModales();
+        }
+
+        window.abrirEdicionCompleta = () => {
+            document.getElementById('modal-acciones').style.display = 'none';
+            document.getElementById('form-titulo').innerText = "Editar: " + platilloActual.nombre;
+            document.getElementById('f-nombre').value = platilloActual.nombre;
+            let opciones = Array.from(document.getElementById('f-categoria').options);
+            let catExiste = opciones.some(opt => opt.value === platilloActual.categoria);
+            if(catExiste && platilloActual.categoria) {
+                document.getElementById('f-categoria').value = platilloActual.categoria;
+                document.getElementById('f-categoria-nueva').style.display = 'none';
+                document.getElementById('f-categoria-nueva').value = '';
+            } else {
+                document.getElementById('f-categoria').value = 'OTRA';
+                document.getElementById('f-categoria-nueva').style.display = 'block';
+                document.getElementById('f-categoria-nueva').value = platilloActual.categoria || '';
+            }
+            document.getElementById('f-desc').value = platilloActual.descripcion || '';
+            document.getElementById('f-precio-chico').value = platilloActual.precioChico || '';
+            document.getElementById('f-precio-grande').value = platilloActual.precioGrande || '';
+            document.getElementById('btn-eliminar-producto').style.display = 'block';
+            document.getElementById('modal-form').style.display = 'flex';
+        }
+
+        window.abrirModalCrear = () => {
+            idEditando = null; platilloActual = null;
+            document.getElementById('form-titulo').innerText = "Nuevo Producto";
+            document.getElementById('f-nombre').value = '';
+            document.getElementById('f-categoria').value = '';
+            document.getElementById('f-categoria-nueva').style.display = 'none';
+            document.getElementById('f-categoria-nueva').value = '';
+            document.getElementById('f-desc').value = '';
+            document.getElementById('f-precio-chico').value = '';
+            document.getElementById('f-precio-grande').value = '';
+            document.getElementById('btn-eliminar-producto').style.display = 'none';
+            document.getElementById('modal-acciones').style.display = 'none';
+            document.getElementById('modal-form').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.guardarInformacionCompleta = async () => {
+            const nombreInput = document.getElementById('f-nombre').value.trim();
+            let categoriaInput = document.getElementById('f-categoria').value;
+            if(categoriaInput === 'OTRA') categoriaInput = document.getElementById('f-categoria-nueva').value.trim();
+            const descInput = document.getElementById('f-desc').value.trim();
+            const precioChico = document.getElementById('f-precio-chico').value;
+            const precioGrande = document.getElementById('f-precio-grande').value;
+
+            if(!nombreInput || !categoriaInput || (!precioChico && !precioGrande)) {
+                await mostrarAlerta("Campos Incompletos", "Por favor completa los campos obligatorios (*).", "⚠️");
+                return;
+            }
+
+            const data = { nombre: nombreInput, categoria: categoriaInput, descripcion: descInput, precioChico: precioChico, precioGrande: precioGrande };
+
+            if(idEditando) {
+                await updateDoc(doc(db, "platillos", idEditando), data);
+            } else {
+                data.destacado = false; data.agotado = false; data.ofertaChico = ""; data.ofertaGrande = "";
+                data.rutaFoto = nombreInput.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '-') + ".jpg";
+                await addDoc(collection(db, "platillos"), data);
+            }
+            cerrarModales();
+        }
+
+        window.eliminarProducto = async () => {
+            const conf = await mostrarConfirmacion("¿Eliminar Platillo?", `¿Estás seguro de que quieres eliminar "<b>${platilloActual.nombre}</b>"?<br><br>Esta acción no se puede deshacer.`, "Sí, Eliminar", "🗑️", "var(--danger)");
+            
+            if (conf) {
+                try { 
+                    await deleteDoc(doc(db, "platillos", idEditando)); 
+                    cerrarModales(); 
+                    await mostrarAlerta("Eliminado", "El producto ha sido eliminado correctamente.", "✅");
+                } 
+                catch (error) { 
+                    await mostrarAlerta("Error", "No se pudo eliminar el producto.", "❌"); 
+                }
+            }
+        }
+
+        window.cerrarModales = () => { 
+            document.getElementById('modal-acciones').style.display = 'none'; 
+            document.getElementById('modal-form').style.display = 'none'; 
+            document.body.style.overflow = ''; 
+        }
+        document.getElementById('btn-cerrar-sesion').onclick = () => signOut(auth);
+    </script>
+</body>
+</html>

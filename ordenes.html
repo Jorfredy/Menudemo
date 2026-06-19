@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard POS - JR Tech</title>
+    <style>
+        :root { --primary: #e65100; --bg: #f4f6f8; --text: #333; --success: #2e7d32; --danger: #e53935; --dark: #121212; --dark-card: #1e1e1e;}
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; background-color: var(--dark); color: #fff; display: none; padding-bottom: 50px;}
+        
+        header { background-color: #000; color: white; padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; position: sticky; top: 0; z-index: 100;}
+        header h1 { margin: 0; font-size: 1.6em; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; font-weight: 900;}
+        
+        .nav-bar { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 15px;}
+        .btn-navegar { background: #222; border: 1px solid #333; color: #aaa; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; text-decoration: none; transition: all 0.2s ease; font-size: 0.95em;}
+        .btn-navegar:hover { background: #333; color: white; border-color: #444;}
+        .btn-navegar.active { background: var(--primary); border-color: var(--primary); color: white; pointer-events: none; box-shadow: 0 4px 10px rgba(230, 81, 0, 0.3);}
+        
+        .btn-salir { background: transparent; border: 1px solid #555; color: #ccc; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-salir:hover { background: rgba(255,255,255,0.1); color: white; border-color: white;}
+        
+        .btn-estado { padding: 10px 20px; border-radius: 8px; font-weight: bold; border: none; color: white; cursor: pointer; font-size: 0.95em; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: 0.2s;}
+        .reloj { font-size: 1.3em; font-weight: 900; color: #888; background: #111; padding: 8px 15px; border-radius: 8px; border: 1px solid #222;}
+
+        .tabs-container { display: flex; background: #1a1a1a; border-bottom: 1px solid #333; padding: 0 20px;}
+        .tab-btn { flex: 1; max-width: 300px; padding: 18px 20px; border: none; background: transparent; color: #666; font-size: 1.1em; font-weight: bold; cursor: pointer; text-transform: uppercase; transition: 0.2s; border-bottom: 4px solid transparent;}
+        .tab-btn:hover { color: #aaa; }
+        .tab-btn.active { color: white; border-bottom: 4px solid var(--primary); }
+
+        .tab-content { display: none; padding: 25px; max-width: 1400px; margin: 0 auto;}
+        .tab-content.active { display: block; }
+
+        #alerta-retiro-caja { display: none; background: rgba(229, 57, 53, 0.1); color: white; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; border: 1px solid var(--danger); animation: parpadeo 2s infinite;}
+        @keyframes parpadeo { 0% { box-shadow: 0 0 15px rgba(229,57,53,0.2); } 50% { box-shadow: 0 0 25px rgba(229,57,53,0.5); } 100% { box-shadow: 0 0 15px rgba(229,57,53,0.2); } }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .btn-retiro-alerta { background: var(--danger); color: white; font-weight: bold; font-size: 1.1em; border: none; padding: 12px 30px; border-radius: 8px; margin-top: 15px; cursor: pointer;}
+
+        .estado-bar { background: var(--dark-card); padding: 15px 25px; text-align: center; font-weight: bold; color: #aaa; border-radius: 12px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333;}
+        
+        .grid-tarjetas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        
+        .card { background: #fff; color: #222; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 8px 20px rgba(0,0,0,0.3); transition: transform 0.2s;}
+        .card:hover { transform: translateY(-5px); }
+        
+        .card-header { background: #f57c00; color: white; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .card-header.cocina-header { background: #e53935; }
+        .card-header.mesa-header { background: #1976d2; } /* Azul para mesas abiertas */
+        
+        .card-mesa { font-size: 1.8em; font-weight: 900; margin: 0; letter-spacing: -1px;}
+        .card-hora { font-size: 0.85em; font-weight: bold; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 6px;}
+        
+        .card-lista { padding: 20px; flex-grow: 1; border-bottom: 2px dashed #eee; max-height: 280px; overflow-y: auto;}
+        .item-pedido { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; font-size: 1.05em; border-bottom: 1px solid #f5f5f5; padding-bottom: 10px;}
+        .item-cant { font-weight: 900; color: var(--primary); width: 35px; flex-shrink: 0; font-size: 1.2em; }
+        .item-detalle { flex-grow: 1; font-weight: 600; color: #333;}
+        .item-precio { color: #555; font-weight: bold;}
+        .item-tam { display: block; font-size: 0.85em; color: #888; font-weight: normal; margin-top: 2px;}
+        
+        .card-footer { padding: 20px; background: #fafafa; display: flex; flex-direction: column; gap: 12px;}
+        .card-total { text-align: center; font-weight: 900; font-size: 1.8em; color: var(--success); padding: 5px 0 15px 0;}
+
+        /* KDS COCINA COLA */
+        .card.main-order { grid-column: 1 / -1; border: 3px solid var(--danger); box-shadow: 0 10px 30px rgba(229,57,53,0.3); margin-bottom: 15px;}
+        .card.main-order .card-lista { max-height: 450px; }
+        .card.compact-order { cursor: pointer; opacity: 0.9; border: 1px solid #444; }
+        .card.compact-order .card-lista, .card.compact-order .card-footer { display: none; }
+        .card.compact-order .cocina-header { background: #333; color: #aaa; border-bottom: none;}
+        .card.compact-order.expanded { grid-column: 1 / -1; opacity: 1; transform: scale(1); border: 2px solid var(--danger); box-shadow: 0 8px 20px rgba(229,57,53,0.2);}
+        .card.compact-order.expanded .card-lista { display: block; }
+        .card.compact-order.expanded .card-footer { display: flex; }
+        .card.compact-order.expanded .cocina-header { background: #e53935; color: white;}
+        
+        .btn-accion { color: white; border: none; padding: 16px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.2s;}
+        .btn-entregar { background: var(--success); }
+        .btn-cobrar { background: #222; }
+        .btn-borrar { background: transparent; color: #999; border: 1px solid #ddd; padding: 12px; font-weight: bold; border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.9em;}
+        .btn-borrar:hover { background: #fff0f0; color: var(--danger); border-color: #ffcdd2;}
+        .sin-datos { text-align: center; color: #555; font-size: 1.5em; margin-top: 80px; grid-column: 1 / -1; font-weight: bold; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(4px);}
+        .modal-content { background: white; color: #333; width: 90%; max-width: 420px; border-radius: 16px; padding: 30px 25px; box-sizing: border-box; text-align: center; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+        .cobro-input { width: 100%; padding: 18px; font-size: 2em; text-align: center; font-weight: bold; border: 2px solid #ddd; border-radius: 10px; margin: 20px 0; background: #fafafa;}
+        .cobro-input:focus { border-color: var(--primary); outline: none;}
+        .cobro-cambio { font-size: 2.8em; font-weight: 900; color: #aaa; margin: 10px 0 25px 0;}
+        .btn-cancelar { background: transparent; color: #888; border: none; padding: 15px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; width: 100%; margin-top: 5px;}
+        .btn-mitad { flex: 1; padding: 14px; font-size: 1.05em; font-weight: bold; border-radius: 10px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div style="display: flex; flex-direction: column;">
+            <div class="nav-bar">
+			    <a href="index.html" class="btn-navegar">Regresar Al Menu</a>
+                <a href="ventas.html" class="btn-navegar">Reporte de Ventas</a>
+				<a href="administrador.html" class="btn-navegar">Administrar Menú</a>
+            </div>
+        </div>
+        <div style="display:flex; align-items:center; gap: 15px; flex-wrap: wrap; justify-content: flex-end;">
+            <button id="btn-estado-tienda" class="btn-estado" style="background: #555;">Cargando...</button>
+            <div class="reloj" id="reloj">00:00:00</div>
+            <button class="btn-salir" id="btn-cerrar-sesion">Cerrar Sesión</button>
+        </div>
+    </header>
+
+    <div class="tabs-container">
+        <button class="tab-btn active" id="btn-caja" onclick="cambiarPestana('caja')">Cobro en Caja</button>
+        <button class="tab-btn" id="btn-cocina" onclick="cambiarPestana('cocina')">Pedidos en Cocina</button>
+    </div>
+
+    <div id="tab-caja" class="tab-content active">
+        <div id="alerta-retiro-caja">
+            <h2 style="margin:0; font-size: 1.8em;">¡ATENCIÓN! LÍMITE DE EFECTIVO</h2>
+            <p style="font-size: 1.1em; font-weight: bold; margin: 10px 0;">Por seguridad, tienes más recursos de lo permitido.</p>
+            <button class="btn-retiro-alerta" id="btn-hacer-retiro" onclick="ejecutarRetiroAutomatico()">Retirar $0.00 ahora</button>
+        </div>
+
+        <div class="estado-bar">
+            <span id="lbl-estado-caja">Esperando Pago del Cliente</span>
+            <span style="color:#aaa; display: flex; align-items: center; gap: 15px;">
+    <span>Efectivo: <span id="txt-efectivo-actual" style="color:var(--success); font-size:1.3em;">$0</span></span>
+
+<div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <button class="btn-borrar" onclick="abrirModalRetiro()">💸 Retiro</button>
+
+    <button class="btn-borrar"
+        style="background:#ff9800;color:white;border:none;"
+        onclick="retirarFondo()">
+        🏦 Retiro Fondo
+    </button>
+
+    <button class="btn-borrar"
+        style="background:#1976d2;color:white;border:none;"
+        onclick="registrarPago()">
+        📋 Pago
+    </button>
+</div>
+
+</span>
+        </div>
+        <div class="grid-tarjetas" id="contenedor-caja"></div>
+    </div>
+
+    <div id="tab-cocina" class="tab-content">
+        <div class="estado-bar">
+            <span>Control de Cola de Preparación</span>
+            <span style="color:#aaa;">Órdenes Pendientes: <span id="contador-cocina" style="color:var(--primary); font-size:1.3em;">0</span></span>
+        </div>
+        <div class="grid-tarjetas" id="contenedor-cocina"></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-cobro">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color:var(--primary); font-size: 1.8em;" id="cobro-titulo-mesa">Cobrar</h2>
+            <div style="font-size: 1.2em; color: #666; font-weight: bold;">Total a pagar:</div>
+            <div style="font-size: 3em; font-weight: 900; color: #222; margin-bottom: 20px; line-height: 1;" id="cobro-total-txt">$0.00</div>
+            
+            <label style="font-weight:bold; color:#777;">Efectivo recibido (Opcional)</label>
+            <input type="number" id="input-recibido" class="cobro-input" placeholder="$0.00" oninput="calcularCambio()">
+            
+            <label style="font-weight:bold; color:#777;">Cambio a entregar:</label>
+            <div class="cobro-cambio" id="texto-cambio">Cobro Exacto</div>
+
+            <button class="btn-accion btn-entregar" id="btn-confirmar-pago" onclick="procesarPagoFinal()">Confirmar Pago</button>
+            <button class="btn-cancelar" onclick="cerrarModalCobro()">Cancelar</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-retiro-manual">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color:var(--primary); font-size: 1.6em;">💸 Retiro Manual</h2>
+            <p style="color: #666; font-weight: bold; margin-bottom: 10px;">¿Cuánto vas a retirar de caja?</p>
+            
+            <input type="number" id="input-retiro-monto" class="cobro-input" placeholder="$0.00" style="margin-top: 0;">
+            
+            <label style="font-weight:bold; color:#777; display: block; text-align: left; margin-top: 15px;">Motivo (Opcional):</label>
+            <input type="text" id="input-retiro-motivo" class="cobro-input" style="font-size: 1em; padding: 12px; margin-top: 5px;" placeholder="Ej. Pago a proveedor, gas, etc.">
+            
+            <button class="btn-accion btn-entregar" style="margin-top: 15px;" onclick="procesarRetiroManual()">Confirmar Retiro</button>
+            <button class="btn-cancelar" onclick="document.getElementById('modal-retiro-manual').style.display='none'">Cancelar</button>
+        </div>
+    </div>
+
+
+    <div class="modal-overlay" id="modal-alerta" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 350px;">
+            <div id="alerta-icono" style="font-size: 4em; margin-bottom: 10px;">⚠️</div>
+            <h2 id="alerta-titulo" style="margin-top: 0; color: #222;">Título</h2>
+            <p id="alerta-mensaje" style="color: #666; margin-bottom: 30px;">Mensaje</p>
+            <div id="alerta-botones" style="display: flex; gap: 12px;"></div>
+        </div>
+    </div>
+
+    <audio id="audio-notificacion" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, updateDoc, writeBatch, increment, addDoc, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAc_eCxcvIJKFclNMApr9_fVDCDLShTLK8",
+            authDomain: "menu-pho88-demo.firebaseapp.com",
+            projectId: "menu-pho88-demo",
+            storageBucket: "menu-pho88-demo.firebasestorage.app",
+            messagingSenderId: "100888777359",
+            appId: "1:100888777359:web:5f2946bebba884858216fa"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // --- SISTEMA DE DIÁLOGOS ---
+        window.mostrarAlerta = (titulo, mensaje, icono = 'ℹ️') => {
+            return new Promise((resolve) => {
+                document.getElementById('alerta-icono').innerText = icono;
+                document.getElementById('alerta-titulo').innerText = titulo;
+                document.getElementById('alerta-mensaje').innerText = mensaje;
+                document.getElementById('alerta-botones').innerHTML = `<button class="btn-mitad" style="background:var(--primary); color:white;" id="btn-alerta-ok">Entendido</button>`;
+                document.getElementById('modal-alerta').style.display = 'flex';
+                document.getElementById('btn-alerta-ok').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(true); };
+            });
+        };
+
+        window.mostrarConfirmacion = (titulo, mensaje, txtBtn = "Aceptar", icono = '❓', color = "var(--primary)") => {
+            return new Promise((resolve) => {
+                document.getElementById('alerta-icono').innerText = icono;
+                document.getElementById('alerta-titulo').innerText = titulo;
+                document.getElementById('alerta-mensaje').innerText = mensaje;
+                document.getElementById('alerta-botones').innerHTML = `
+                    <button class="btn-mitad" style="background:#eee; color:#555;" id="btn-alerta-cancelar">Cancelar</button>
+                    <button class="btn-mitad" style="background:${color}; color:white;" id="btn-alerta-confirmar">${txtBtn}</button>
+                `;
+                document.getElementById('modal-alerta').style.display = 'flex';
+                document.getElementById('btn-alerta-cancelar').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(false); };
+                document.getElementById('btn-alerta-confirmar').onclick = () => { document.getElementById('modal-alerta').style.display = 'none'; resolve(true); };
+            });
+        };
+
+        setInterval(() => { document.getElementById('reloj').innerText = new Date().toLocaleTimeString('es-MX', { hour12: true }); }, 1000);
+
+// 1. REEMPLAZA tu función actual por esta. Le añadimos un par de líneas 
+        // para asegurar que el título del modal sea el correcto cuando se usa para Retiros.
+        window.abrirModalRetiro = () => {
+            if(cajaActual.estado !== 'abierta') {
+                mostrarAlerta("Caja Cerrada", "Debes abrir el turno primero para poder retirar dinero.", "🔒");
+                return;
+            }
+            document.getElementById('input-retiro-monto').value = '';
+            document.getElementById('input-retiro-motivo').value = '';
+            
+            // Guardamos el tipo en el modal
+            document.getElementById('modal-retiro-manual').dataset.tipo = 'retiro';
+            
+            document.querySelector('#modal-retiro-manual h2').innerText = "💸 Retiro Manual";
+            document.querySelector('#modal-retiro-manual p').innerText = "¿Cuánto vas a retirar de caja?";
+            document.getElementById('modal-retiro-manual').style.display = 'flex';
+        };
+
+        window.registrarPago = () => {
+            if(cajaActual.estado !== 'abierta') {
+                mostrarAlerta("Caja Cerrada", "Debes abrir el turno primero para registrar un pago.", "🔒");
+                return;
+            }
+            document.getElementById('input-retiro-monto').value = '';
+            document.getElementById('input-retiro-motivo').value = '';
+            
+            // Guardamos el tipo en el modal
+            document.getElementById('modal-retiro-manual').dataset.tipo = 'pago';
+            
+            document.querySelector('#modal-retiro-manual h2').innerText = "📋 Registrar Pago / Gasto";
+            document.querySelector('#modal-retiro-manual p').innerText = "¿Cuánto vas a pagar desde la caja?";
+            document.getElementById('modal-retiro-manual').style.display = 'flex';
+        };
+
+        window.retirarFondo = async () => {
+            if(cajaActual.estado !== 'abierta') {
+                mostrarAlerta("Caja Cerrada", "La caja debe estar abierta para retirar el excedente.", "🔒");
+                return;
+            }
+            let extra = cajaActual.efectivoActual - cajaActual.fondo;
+            if(extra <= 0) {
+                mostrarAlerta("Sin excedente", `Actualmente tienes $${cajaActual.efectivoActual.toFixed(2)}. Solo tienes el fondo base o menos.`, "⚠️");
+                return;
+            }
+            const conf = await mostrarConfirmacion("¿Retirar Excedente?", `Se retirarán $${extra.toFixed(2)} para dejar el fondo base.`, "Retirar Excedente", "🏦", "#ff9800");
+            if(conf) {
+                try {
+                    await addDoc(collection(db, "retiros_historial"), { monto: extra, motivo: 'Retiro de excedente', tipo: 'retiro', fecha: serverTimestamp() });
+                    await updateDoc(docCaja, { efectivoActual: increment(-extra), retirosTurno: increment(extra) });
+                    await mostrarAlerta("¡Retiro Exitoso!", `Se han extraído $${extra.toFixed(2)}.`, "✅");
+                } catch(e) { await mostrarAlerta("Error", "Problema al procesar.", "❌"); }
+            }
+        };
+
+        window.procesarRetiroManual = async () => {
+            let monto = parseFloat(document.getElementById('input-retiro-monto').value);
+            let motivo = document.getElementById('input-retiro-motivo').value.trim() || 'Movimiento manual';
+            // Leemos si es un retiro o un pago
+            let tipoMov = document.getElementById('modal-retiro-manual').dataset.tipo || 'retiro';
+
+            if(isNaN(monto) || monto <= 0) {
+                mostrarAlerta("Error", "Ingresa una cantidad válida.", "⚠️");
+                return;
+            }
+            if(monto > cajaActual.efectivoActual) {
+                mostrarAlerta("Sin fondos", `Efectivo actual: $${cajaActual.efectivoActual.toFixed(2)}`, "❌");
+                return;
+            }
+
+            const tituloConf = tipoMov === 'pago' ? "¿Confirmar Pago?" : "¿Confirmar Retiro?";
+            const conf = await mostrarConfirmacion(tituloConf, `¿Vas a extraer $${monto.toFixed(2)} de la caja?\n\nMotivo: ${motivo}`, "Sí, Confirmar", "💸", "var(--success)");
+            
+            if(conf) {
+                try {
+                    await addDoc(collection(db, "retiros_historial"), { monto: monto, motivo: motivo, tipo: tipoMov, fecha: serverTimestamp() });
+                    
+                    // Elegimos dinámicamente qué contador sumar en Firebase
+                    let updates = { efectivoActual: increment(-monto) };
+                    if(tipoMov === 'pago') {
+                        updates.pagosTurno = increment(monto);
+                    } else {
+                        updates.retirosTurno = increment(monto);
+                    }
+                    
+                    await updateDoc(docCaja, updates);
+                    document.getElementById('modal-retiro-manual').style.display = 'none';
+                    await mostrarAlerta("¡Exitoso!", "Movimiento registrado en caja.", "✅");
+                } catch(e) { await mostrarAlerta("Error", "Error de conexión.", "❌"); }
+            }
+        };
+
+        window.cambiarPestana = (id) => {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + id).classList.add('active');
+            document.getElementById('btn-' + id).classList.add('active');
+        }
+
+        // --- MODO DE OPERACIÓN GLOBAL ---
+        let modoOperacionG = 'caja';
+        let unsubCaja = null;
+        let unsubCocina = null;
+
+        const docGlobal = doc(db, "configuracion", "global");
+        onSnapshot(docGlobal, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                let nuevoModo = data.modoOperacion || 'caja';
+
+                if (nuevoModo !== modoOperacionG) {
+                    modoOperacionG = nuevoModo;
+                    
+                    // Adaptar la interfaz
+                    if(modoOperacionG === 'mesas') {
+                        document.getElementById('btn-caja').innerText = "Cuentas de Mesas";
+                        document.getElementById('lbl-estado-caja').innerText = "Mesas Activas (Consumiendo)";
+                    } else {
+                        document.getElementById('btn-caja').innerText = "Cobro en Caja";
+                        document.getElementById('lbl-estado-caja').innerText = "Esperando Pago del Cliente";
+                    }
+
+                    // Reiniciar lecturas de base de datos para cargar el modo correcto
+                    iniciarMonitoreoPedidos();
+                }
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { 
+                document.body.style.display = "block"; 
+                escucharEstadoTienda();
+                escucharCajaFuerte();
+                iniciarMonitoreoPedidos();
+            } else { window.location.href = "index.html"; }
+        });
+        document.getElementById('btn-cerrar-sesion').onclick = () => signOut(auth);
+
+        function iniciarMonitoreoPedidos() {
+            if(unsubCaja) unsubCaja();
+            if(unsubCocina) unsubCocina();
+            escucharPanelCobro();
+            escucharEnCocina();
+        }
+
+        // ... (CÓDIGO DE ESTADO TIENDA Y CAJA FUERTE IGUAL) ...
+        let restauranteAbierto = true;
+        const docConfig = doc(db, "configuracion", "restaurante");
+        function escucharEstadoTienda() {
+            onSnapshot(docConfig, (docSnap) => {
+                if (docSnap.exists()) { restauranteAbierto = docSnap.data().abierto; } 
+                else { setDoc(docConfig, { abierto: true }); restauranteAbierto = true; }
+                const btnEstado = document.getElementById('btn-estado-tienda');
+                if(restauranteAbierto) { btnEstado.innerText = "RECIBIENDO ÓRDENES"; btnEstado.style.background = "var(--success)"; } 
+                else { btnEstado.innerText = "RESTAURANTE CERRADO"; btnEstado.style.background = "var(--danger)"; }
+            });
+        }
+        document.getElementById('btn-estado-tienda').onclick = async () => {
+            const nuevoEstado = !restauranteAbierto;
+            const accion = nuevoEstado ? 'ABRIR' : 'CERRAR';
+            const colorBtn = nuevoEstado ? 'var(--success)' : 'var(--danger)';
+            const conf = await mostrarConfirmacion(`¿${accion} SISTEMA?`, `¿Deseas ${accion.toLowerCase()} la recepción de pedidos en el menú de los clientes?`, accion, "🏪", colorBtn);
+            if(conf) { await setDoc(docConfig, { abierto: nuevoEstado }, { merge: true }); }
+        };
+
+        const docCaja = doc(db, "configuracion", "caja");
+        let cajaActual = { estado: 'cerrada', efectivoActual: 0, fondo: 0, limite: 0 };
+        let retiroRequerido = 0;
+
+        function escucharCajaFuerte() {
+            onSnapshot(docCaja, (docSnap) => {
+                if (docSnap.exists()) {
+                    cajaActual = docSnap.data();
+                    document.getElementById('txt-efectivo-actual').innerText = `$${cajaActual.efectivoActual.toFixed(2)}`;
+                    
+                    const alertaDiv = document.getElementById('alerta-retiro-caja');
+                    if(cajaActual.estado === 'abierta' && cajaActual.efectivoActual >= cajaActual.limite) {
+                        alertaDiv.style.display = 'block';
+                        retiroRequerido = cajaActual.efectivoActual - cajaActual.fondo; 
+                        document.getElementById('btn-hacer-retiro').innerText = `Retirar $${retiroRequerido.toFixed(2)} y autorizar caja`;
+                        document.getElementById('contenedor-caja').style.opacity = '0.3';
+                        document.getElementById('contenedor-caja').style.pointerEvents = 'none';
+                    } else {
+                        alertaDiv.style.display = 'none';
+                        document.getElementById('contenedor-caja').style.opacity = '1';
+                        document.getElementById('contenedor-caja').style.pointerEvents = 'auto';
+                    }
+                }
+            });
+        }
+        window.ejecutarRetiroAutomatico = async () => {
+            const msj = `Se sacarán $${retiroRequerido.toFixed(2)} de la caja fuerte.\n\nQuedará el fondo exacto de $${cajaActual.fondo.toFixed(2)}`;
+            const conf = await mostrarConfirmacion("¿Confirmar Retiro?", msj, "Retirar Dinero", "💸", "var(--success)");
+            if(conf) {
+                try {
+                    await addDoc(collection(db, "retiros_historial"), { monto: retiroRequerido, fecha: serverTimestamp() });
+                    await updateDoc(docCaja, { efectivoActual: increment(-retiroRequerido), retirosTurno: increment(retiroRequerido) });
+                    await mostrarAlerta("¡Retiro Exitoso!", "La caja ha sido liberada para seguir cobrando.", "✅");
+                } catch(e) { await mostrarAlerta("Error", "No se pudo registrar el retiro.", "❌"); }
+            }
+        };
+
+        let cantidadCajaAnterior = 0;
+        let cantidadCocinaAnterior = 0;
+        let datosCobroActual = { ids: [], identificador: '', total: 0, esMesa: false }; 
+
+        // --- LA MAGIA DE LA PANTALLA DE COBRO / MESAS ---
+        function escucharPanelCobro() {
+            let estadosBuscados = (modoOperacionG === 'mesas') ? ["en_cocina", "servido_mesa"] : ["por_pagar"];
+            
+            const q = query(collection(db, "ordenes"), where("estado", "in", estadosBuscados));
+            unsubCaja = onSnapshot(q, (snapshot) => {
+                let htmlCaja = ''; 
+                let contadorCaja = 0;
+
+                if (modoOperacionG === 'caja') {
+                    // LÓGICA MODO CAJA (Food Trucks) - Tickets individuales por pagar
+                    let ordenesArray = [];
+                    snapshot.forEach(docSnap => { let d = docSnap.data(); d.id = docSnap.id; ordenesArray.push(d); });
+                    ordenesArray.sort((a, b) => (a.fecha ? a.fecha.toMillis() : Date.now()) - (b.fecha ? b.fecha.toMillis() : Date.now()));
+
+                    ordenesArray.forEach((o) => {
+                        contadorCaja++;
+                        let horaTexto = (o.fecha && o.fecha.toDate) ? o.fecha.toDate().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Reciente";
+                        let itemsHtml = '';
+                        o.items.forEach(item => { 
+                            itemsHtml += `<div class="item-pedido"><div class="item-cant">${item.cantidad}x</div><div class="item-detalle">${item.nombre} ${item.tamaño?`<span class="item-tam">${item.tamaño}</span>`:''}</div><div class="item-precio">$${(item.cantidad * item.precioUnitario).toFixed(2)}</div></div>`; 
+                        });
+
+                        htmlCaja += `
+                            <div class="card">
+                                <div class="card-header">
+                                    <h2 class="card-mesa">TICKET #${o.ticket}</h2>
+                                    <span class="card-hora">${horaTexto}</span>
+                                </div>
+                                <div class="card-lista">${itemsHtml}</div>
+                                <div class="card-footer">
+                                    <div class="card-total">A COBRAR: $${parseFloat(o.total).toFixed(2)}</div>
+                                    <button class="btn-accion btn-cobrar" onclick='abrirModalCobro(["${o.id}"], "${o.ticket}", ${o.total}, false)'>Cobrar y a Cocina</button>
+                                    <button class="btn-borrar" onclick="borrarTicketFalso('${o.id}', '${o.ticket}')">Borrar Orden Fantasma</button>
+                                </div>
+                            </div>`;
+                    });
+                    document.getElementById('contenedor-caja').innerHTML = htmlCaja || '<div class="sin-datos">No hay clientes en fila de pago.</div>';
+
+                } else {
+                    // LÓGICA MODO MESAS (Restaurantes) - Agrupar por Mesa
+                    let mesasMap = {};
+                    snapshot.forEach(docSnap => {
+                        let o = docSnap.data();
+                        if (o.mesa) {
+                            if(!mesasMap[o.mesa]) mesasMap[o.mesa] = { ids: [], total: 0, items: [], estadoMesa: 'Servido' };
+                            mesasMap[o.mesa].ids.push(docSnap.id);
+                            mesasMap[o.mesa].total += o.total;
+                            mesasMap[o.mesa].items.push(...o.items);
+                            if(o.estado === 'en_cocina') mesasMap[o.mesa].estadoMesa = 'Cocinando...';
+                        }
+                    });
+
+                    Object.keys(mesasMap).forEach(numMesa => {
+                        contadorCaja++;
+                        let datosMesa = mesasMap[numMesa];
+                        let itemsHtml = '';
+                        datosMesa.items.forEach(item => {
+                            itemsHtml += `<div class="item-pedido"><div class="item-cant">${item.cantidad}x</div><div class="item-detalle">${item.nombre} ${item.tamaño?`<span class="item-tam">${item.tamaño}</span>`:''}</div><div class="item-precio">$${(item.cantidad * item.precioUnitario).toFixed(2)}</div></div>`; 
+                        });
+
+                        htmlCaja += `
+                            <div class="card">
+                                <div class="card-header mesa-header">
+                                    <h2 class="card-mesa">MESA ${numMesa}</h2>
+                                    <span class="card-hora">${datosMesa.estadoMesa}</span>
+                                </div>
+                                <div class="card-lista">${itemsHtml}</div>
+                                <div class="card-footer">
+                                    <div class="card-total">CUENTA: $${parseFloat(datosMesa.total).toFixed(2)}</div>
+                                    <button class="btn-accion btn-cobrar" onclick='abrirModalCobro(${JSON.stringify(datosMesa.ids)}, "${numMesa}", ${datosMesa.total}, true)'>Cobrar Mesa Completa</button>
+                                </div>
+                            </div>`;
+                    });
+                    document.getElementById('contenedor-caja').innerHTML = htmlCaja || '<div class="sin-datos">No hay mesas abiertas consumiendo.</div>';
+                }
+                
+                if (contadorCaja > cantidadCajaAnterior && cantidadCajaAnterior !== 0) document.getElementById('audio-notificacion').play().catch(()=>{});
+                cantidadCajaAnterior = contadorCaja;
+            });
+        }
+
+        // --- PANTALLA DE COCINA ---
+        function escucharEnCocina() {
+            const q = query(collection(db, "ordenes"), where("estado", "==", "en_cocina"));
+            unsubCocina = onSnapshot(q, (snapshot) => {
+                let htmlCocina = ''; 
+                let contadorCocina = 0;
+                
+                let ordenesArray = [];
+                snapshot.forEach(docSnap => { let d = docSnap.data(); d.id = docSnap.id; ordenesArray.push(d); });
+                ordenesArray.sort((a, b) => (a.fechaPago ? a.fechaPago.toMillis() : (a.fecha ? a.fecha.toMillis() : Date.now())) - (b.fechaPago ? b.fechaPago.toMillis() : (b.fecha ? b.fecha.toMillis() : Date.now())));
+
+                ordenesArray.forEach((o, index) => {
+                    contadorCocina++;
+                    let horaTexto = (o.fechaPago && o.fechaPago.toDate) ? o.fechaPago.toDate().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true }) : "Reciente";
+                    let identificador = (modoOperacionG === 'mesas' && o.mesa) ? `MESA ${o.mesa}` : `TICKET #${o.ticket}`;
+
+                    let itemsHtml = '';
+                    o.items.forEach(item => { 
+                        let txtCat = item.categoria ? `<span style="font-size:0.7em; color:#e53935; display:block; line-height:1; margin-bottom:2px; font-weight:800; text-transform:uppercase;">${item.categoria}</span>` : '';
+                        itemsHtml += `<div class="item-pedido"><div class="item-cant" style="color: #222;">${item.cantidad}x</div><div class="item-detalle">${txtCat}${item.nombre} ${item.tamaño?`<span class="item-tam">▶ ${item.tamaño}</span>`:''}</div></div>`; 
+                    });
+
+                    if (index === 0) {
+                        htmlCocina += `
+                            <div class="card main-order">
+                                <div class="card-header cocina-header">
+                                    <div style="display:flex; flex-direction:column;">
+                                        <span style="font-size: 0.85em; font-weight: bold; color: rgba(255,255,255,0.9); text-transform: uppercase; margin-bottom: 2px;">🔥 Preparando Ahora</span>
+                                        <h2 class="card-mesa">${identificador}</h2>
+                                    </div>
+                                    <span class="card-hora">${horaTexto}</span>
+                                </div>
+                                <div class="card-lista">${itemsHtml}</div>
+                                <div class="card-footer">
+                                    <button class="btn-accion btn-entregar" onclick="marcarEntregado('${o.id}')">✅ Marcar Listo / Servido</button>
+                                </div>
+                            </div>`;
+                    } else {
+                        htmlCocina += `
+                            <div class="card compact-order" onclick="this.classList.toggle('expanded')">
+                                <div class="card-header cocina-header">
+                                    <h2 class="card-mesa">${identificador}</h2>
+                                    <span class="card-hora">⏱️ En Cola</span>
+                                </div>
+                                <div class="card-lista">${itemsHtml}</div>
+                                <div class="card-footer">
+                                    <button class="btn-accion btn-entregar" onclick="event.stopPropagation(); marcarEntregado('${o.id}')">✅ Marcar Servido</button>
+                                </div>
+                            </div>`;
+                    }
+                });
+
+                document.getElementById('contador-cocina').innerText = contadorCocina;
+                document.getElementById('contenedor-cocina').innerHTML = htmlCocina || '<div class="sin-datos">Cocina despejada. Buen trabajo 👨‍🍳</div>';
+                
+                if (contadorCocina > cantidadCocinaAnterior && cantidadCocinaAnterior !== 0) document.getElementById('audio-notificacion').play().catch(()=>{});
+                cantidadCocinaAnterior = contadorCocina;
+            });
+        }
+
+        window.borrarTicketFalso = async (id, num) => {
+            const conf = await mostrarConfirmacion("¿Borrar Orden?", `¿Estás seguro de borrar esta orden? Esto no se puede deshacer.`, "Sí, borrar", "🗑️", "var(--danger)");
+            if(conf) { try { await deleteDoc(doc(db, "ordenes", id)); } catch (error) { await mostrarAlerta("Error", "Problema al borrar.", "❌"); } }
+        };
+
+        // En Modo Caja: Cierra el ticket. En Modo Mesas: Lo deja servido esperando el pago de la cuenta.
+        window.marcarEntregado = async (id) => { 
+            let estadoNuevo = (modoOperacionG === 'mesas') ? 'servido_mesa' : 'pagada';
+            try { await updateDoc(doc(db, "ordenes", id), { estado: estadoNuevo }); } 
+            catch (error) { await mostrarAlerta("Error", "No se pudo actualizar el estado.", "❌"); } 
+        };
+
+        window.abrirModalCobro = async (arrayIds, identificador, total, esMesa) => {
+            if(cajaActual.estado !== 'abierta') { await mostrarAlerta("Caja Cerrada", "Abre el turno en la pestaña de Ventas primero.", "🔒"); return; }
+            
+            datosCobroActual = { ids: arrayIds, identificador, total, esMesa };
+            
+            document.getElementById('cobro-titulo-mesa').innerText = esMesa ? `Cobrar Mesa ${identificador}` : `Cobrar Ticket #${identificador}`;
+            document.getElementById('cobro-total-txt').innerText = `$${total.toFixed(2)}`;
+            document.getElementById('input-recibido').value = '';
+            document.getElementById('texto-cambio').innerText = 'Cobro Exacto';
+            document.getElementById('texto-cambio').style.color = '#aaa';
+            document.getElementById('btn-confirmar-pago').innerText = esMesa ? "Confirmar Pago de Mesa" : "Cobrar y Enviar a Cocina";
+            document.getElementById('btn-confirmar-pago').disabled = false;
+            
+            document.getElementById('modal-cobro').style.display = 'flex';
+            setTimeout(() => document.getElementById('input-recibido').focus(), 100);
+        };
+        
+        window.cerrarModalCobro = () => { document.getElementById('modal-cobro').style.display = 'none'; };
+
+        window.calcularCambio = () => {
+            let inputVal = document.getElementById('input-recibido').value;
+            let btn = document.getElementById('btn-confirmar-pago'); 
+            let txt = document.getElementById('texto-cambio');
+
+            if (inputVal === '') { txt.innerText = 'Cobro Exacto'; txt.style.color = '#aaa'; btn.disabled = false; return; }
+
+            let recibido = parseFloat(inputVal) || 0;
+            let cambio = recibido - datosCobroActual.total;
+            
+            if (recibido >= datosCobroActual.total) { txt.innerText = `$${cambio.toFixed(2)}`; txt.style.color = 'var(--success)'; btn.disabled = false; } 
+            else { txt.innerText = 'Falta dinero'; txt.style.color = 'var(--danger)'; btn.disabled = true; }
+        };
+
+        // Procesamiento Dinámico: Decide qué hacer con el ticket según el modo
+        window.procesarPagoFinal = async () => {
+            const btn = document.getElementById('btn-confirmar-pago'); btn.innerText = "⏳ Procesando..."; btn.disabled = true;
+            try {
+                const batch = writeBatch(db);
+                
+                // Si es Modo Mesas, pagar significa que se van. Si es Caja, pagar significa mandar a cocinar.
+                let estadoSiguiente = datosCobroActual.esMesa ? 'pagada' : 'en_cocina';
+
+                datosCobroActual.ids.forEach(id => {
+                    batch.update(doc(db, "ordenes", id), { estado: estadoSiguiente, fechaPago: serverTimestamp() });
+                });
+                
+                batch.update(docCaja, { efectivoActual: increment(datosCobroActual.total), ventasTurno: increment(datosCobroActual.total) });
+                
+                await batch.commit();
+                cerrarModalCobro();
+            } catch(e) { await mostrarAlerta("Error", "Problema al procesar el pago.", "📡"); console.error(e); } 
+            finally { btn.innerText = "Confirmar Pago"; }
+        };
+    </script>
+</body>
+</html>
